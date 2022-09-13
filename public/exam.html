@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang = "ko">
+<head>
+    <style>
+        body {
+            margin: 0;
+        }
+        header {
+            text-align: center;
+            background-color: lightgray;
+            padding: 30px;
+        }
+        nav ul {
+            list-style-type: none;
+            margin-bottom: 0px;
+            text-align: center;
+        }
+        nav ul li {
+            display: inline-block;
+            border: 1px solid ;
+            width: 300px;
+        }
+        nav ul li a {
+            display: block;
+            color: black;
+            font-weight: bold;
+            font-size: 17px;
+            margin: 10px 10px;
+            text-decoration: none;
+        }
+        nav ul li:hover 
+        {
+            background-color: black;
+        }
+        nav ul li:hover a 
+        {
+            color: chartreuse;
+        }
+        nav ul li a:active {
+            color: aqua;
+        }
+        #subt {
+            text-align: center;
+        }
+        #subt p{
+            display: inline-block;
+            font-weight: bold;
+            font-size: 20px;
+            text-align: center;
+            width: 30%;
+            color: saddlebrown;
+        }
+        #subt p::before{
+            content: "COVID";
+        }
+        #subt p::after {
+            content: " 감염현황";
+        }
+        [class *= date] {
+            overflow: auto;
+            background-color: lightgray;
+            margin: 10px;
+            float: left;
+            border: 2px solid;
+            width: 25%;
+            height: 500px;
+        }
+        [class *= result] {
+            overflow: auto;
+            background-color: lightgray;
+            margin: 10px;
+            float: right;
+            border: 2px solid;
+            width: 68%;
+            height: 500px;
+        }
+
+        .date > p, .date2 > p{
+            font-weight: bolder;
+            text-align: center;   
+        }
+        .date > input, .date > select, .date2 > input {
+            text-align: right;
+            border: 2px solid;
+            margin-left: 5%;
+            width: 85%;
+            height: 5%;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        #btn , #clear, #btn2, #clear2 {
+            font-weight: bolder;
+            text-align: center;
+            width: 40%;
+            height: 8%;
+            border: none;
+            padding: 10px;
+            margin: 5px;
+            box-sizing: border-box;
+            margin-left: 5%;
+            border-radius: 6px;
+        }
+        #btn:hover , #clear:hover , #btn2:hover , #clear2:hover{
+            background-color: black;
+            color: chartreuse;
+        }
+        table {
+            width: 90%;
+            margin-left: 5%;
+        }
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        th {
+            background-color: black;
+            color: chartreuse;
+        }
+        th, td {
+            padding: 20px;
+        }
+        td {
+            background-color: white;
+            font-size: 15px;
+            font-weight: bolder;
+            text-align: right;
+        }
+        footer {
+            clear: both;
+            background-color: darkgray;
+            color: white;
+            text-align: center;
+            height: 100px;
+        }
+        footer > span {
+            display: inline-block;
+            margin-top: 20px;
+        }
+        @media screen and (max-width:900px){
+            .date, .result , .date2,.result2 {
+                float: none;
+                box-sizing: border-box;
+                margin-left: 5%;
+                width: 90%;
+            }
+            #subt > p {
+                font-size: 18px;
+            }
+        }
+    </style>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <script>
+        $(document).ready(function(){
+            // 버튼 클릭시 데이터 서버로부터 넘겨받은후 출력
+            $("#btn").click(function(){
+                if(document.getElementById("syear").value.length != 4 ||document.getElementById("eyear").value.length != 4 ||
+                document.getElementById("sday").value.length != 2 || document.getElementById("eday").value.length != 2){
+                    alert("Invalid Data Error")
+                    return;
+                }
+
+                var url = "http://localhost:3000/covid";
+                var startdate = document.getElementById("syear").value + document.getElementById("smonth").value + document.getElementById("sday").value;
+                var startDt = startdate;
+                var enddate = document.getElementById("eyear").value + document.getElementById("emonth").value + document.getElementById("eday").value;
+                var endDt = enddate;
+                url = url + "?" + "numOfRows=10&pageNo=1" + "&startCreateDt=" + startDt +"&endCreateDt=" + endDt;
+                var tbl = document.getElementById("table1");
+                document.getElementById("table1").innerHTML = "<tr><th>기준일</th><th>기준시간</th><th>누적확진자수</th><th>누적사망자수</th></tr>";
+
+                $.get(url, function(data, status) {
+                    if(status == "success") {
+                        var parsed = $.parseXML(data);
+                        var dates = parsed.getElementsByTagName("stateDt");
+                        var times = parsed.getElementsByTagName("stateTime");
+                        var decides = parsed.getElementsByTagName("decideCnt");
+                        var deaths = parsed.getElementsByTagName("deathCnt");
+                       
+                        for (var i =0; i < dates.length; i++){
+                            var date = dates[i].childNodes[0].nodeValue;
+                            var time = times[i].childNodes[0].nodeValue;
+                            var decide = decides[i].childNodes[0].nodeValue;
+                            var death = deaths[i].childNodes[0].nodeValue;
+                            tbl.innerHTML += "<tr><td>" + date + "</td><td>" + time + "</td><td>" 
+                            + decide + "명</td><td>" + death + "명</td></tr>";
+                        }
+                    }
+                });
+            });
+            // 버튼 클릭시 입출력 초기화
+            $("#clear").click(function(){
+                document.getElementById("table1").innerHTML = "<tr><th>기준일</th><th>기준시간</th><th>누적확진자수</th><th>누적사망자수</th></tr>";
+                document.getElementById("syear").value = ""; 
+                document.getElementById("smonth").value = "1월";
+                document.getElementById("sday").value = "";
+                document.getElementById("eyear").value = ""; 
+                document.getElementById("emonth").value = "1월";
+                document.getElementById("eday").value = "";
+            })
+            // 버튼 클릭시 데이터 서버로부터 넘겨받은후 출력
+            $("#btn2").click(function(){
+                if(document.getElementById("sday2").value.length != 2 ||document.getElementById("eday2").value.length != 2 ||
+                document.getElementById("sdate").value == "" || document.getElementById("edate").value.length == ""){
+                    alert("Invalid Data Error")
+                    return;
+                }
+
+                var url = "http://localhost:3000/covid2";
+                var startdate = document.getElementById("sdate").value + document.getElementById("sday2").value;
+                var startDt = startdate.replace("-", "");
+                var enddate = document.getElementById("edate").value + document.getElementById("eday2").value;
+                var endDt = enddate.replace("-", "");
+                url = url + "?" + "numOfRows=10&pageNo=1" + "&startCreateDt=" + startDt +"&endCreateDt=" + endDt;
+                var tbl = document.getElementById("table2");
+                document.getElementById("table2").innerHTML = "<tr><th>기준일시</th><th>시·도명</th><th>누적확진자수</th><th>누적사망자수</th><th>전일대비증감수</th></tr>";
+
+                $.get(url, function(data, status) {
+                    if(status == "success") {
+                        var parsed = $.parseXML(data);
+                        var dates = parsed.getElementsByTagName("stdDay");
+                        var cities = parsed.getElementsByTagName("gubun");
+                        var decides = parsed.getElementsByTagName("defCnt");
+                        var deaths = parsed.getElementsByTagName("deathCnt");
+                        var incs = parsed.getElementsByTagName("incDec");
+                        var input_city = document.getElementById("city").value;
+                       
+                        for (var i =0; i < dates.length; i++){
+                            var date = dates[i].childNodes[0].nodeValue;
+                            var city = cities[i].childNodes[0].nodeValue;
+                            var decide = decides[i].childNodes[0].nodeValue;
+                            var death = deaths[i].childNodes[0].nodeValue;
+                            var inc = incs[i].childNodes[0].nodeValue;
+                            if(input_city == ""){
+                                tbl.innerHTML += "<tr><td>" + date + "</td><td>" + city + "</td><td>" 
+                                + decide + "명</td><td>" + death + "명</td><td>" + inc + "</td></tr>";
+                            }
+                            else if(input_city == city){
+                                tbl.innerHTML += "<tr><td>" + date + "</td><td>" + city + "</td><td>" 
+                                + decide + "명</td><td>" + death + "명</td><td>" + inc + "</td></tr>";
+                            }
+                        }
+                    }
+                });
+            });
+            // 버튼 클릭시 입출력 초기화
+            $("#clear2").click(function(){
+                document.getElementById("table2").innerHTML = "<tr><th>기준일시</th><th>시·도명</th><th>누적확진자수</th><th>누적사망자수</th><th>전일대비증감수</th></tr>";
+                document.getElementById("sdate").value = ""; 
+                document.getElementById("sday2").value = "";
+                document.getElementById("edate").value = "";
+                document.getElementById("eday2").value = "";
+                document.getElementById("city").value = "";
+            })
+        });
+    </script>
+</head>
+<body>
+
+<header>
+    <h1>COVID-19 Infection Status</h1>
+    <nav>
+        <ul>
+            <li><a href = "#s1">코로나-19 감염현황</a></li>
+            <li><a href = "#s2">코로나-19 시·도별 감염현황</a></li>
+        </ul>
+    </nav>
+</header>
+
+<div id = "subt">
+    <p id = "s1">-19</p>
+</div>
+
+<div class = "date">
+    <p>시작 날짜입력</p>
+    <input type="text" name = "year" id = "syear" placeholder="년">
+    <select name = "month" id = "smonth">
+        <option value="01">1월</option>
+        <option value="02">2월</option>
+        <option value="03">3월</option>
+        <option value="04">4월</option>
+        <option value="05">5월</option>
+        <option value="06">6월</option>
+        <option value="07">7월</option>
+        <option value="08">8월</option>
+        <option value="09">9월</option>
+        <option value="10">10월</option>
+        <option value="11">11월</option>
+        <option value="12">12월</option>
+    </select>
+    <input type="text" name = "day" id = "sday" placeholder="일">
+
+    <p>끝 날짜입력</p>
+    <input type="text" name = "year" id = "eyear" placeholder="년">
+    <select name = "month" id = "emonth">
+        <option value="01">1월</option>
+        <option value="02">2월</option>
+        <option value="03">3월</option>
+        <option value="04">4월</option>
+        <option value="05">5월</option>
+        <option value="06">6월</option>
+        <option value="07">7월</option>
+        <option value="08">8월</option>
+        <option value="09">9월</option>
+        <option value="10">10월</option>
+        <option value="11">11월</option>
+        <option value="12">12월</option>
+    </select>
+    <input type="text" name = "day" id = "eday" placeholder="일">
+    <input type="button" value = "입력" id = "btn">
+    <button id = "clear">초기화</button>
+</div>
+
+<div class = "result">
+    <br>
+    <table id = "table1">
+        <tr>
+            <th>기준일</th>
+            <th>기준시간</th>
+            <th>누적확진자수</th>
+            <th>누적사망자수</th>
+        </tr>
+    </table>
+</div>
+
+<div id = "subt">
+    <p id = "s2">-19 시·도별</p>
+</div>
+
+<div class = "date2">
+    <p>시작 날짜입력</p>
+    <input type ="month" id = "sdate">
+    <input type="text" name = "day" id = "sday2" placeholder="일">
+    <p>끝 날짜입력</p>
+    <input type ="month" id = "edate">
+    <input type="text" name = "day" id = "eday2" placeholder="일">
+    <p>시·도 입력</p>
+    <input type="text" name = "city" id = "city" placeholder="입력 없을 시 모든 시·도 출력">
+    <input type="button" value = "입력" id = "btn2">
+    <button id = "clear2">초기화</button>
+</div>
+
+<div class = "result2">
+    <p id = "law"></p>
+    <br>
+    <table id = "table2">
+        <tr>
+            <th>기준일시</th>
+            <th>시·도명</th>
+            <th>누적확진자수</th>
+            <th>누적사망자수</th>
+            <th>전일대비증감수</th>
+        </tr>
+    </table>
+</div>
+
+<footer>
+    <span>Email : kjh302903@gmail.com </span><br>
+    <span> &copy; 2022 KangJuho. All Rights Reserved.</span>
+</footer>
+
+</body>
+</html>
